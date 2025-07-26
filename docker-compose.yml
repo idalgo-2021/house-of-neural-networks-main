@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/000001_init.up.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  triton:
+      image: nvcr.io/nvidia/tritonserver:24.11-py3
+      restart: always
+      container_name: triton_container
+      ipc: host
+      networks:
+        - app_network
+      environment:
+        MODEL_CONTROL_MODE: explicit
+      volumes:
+        - model_repository:/models
+      command: tritonserver --model-repository=/models --log-verbose=1 --log-error=1 --log-warning=1 --log-info=1 --model-control-mode=explicit
+
+  auth_service:
+    container_name: auth_service
+    build:
+      context: .
+      dockerfile: Dockerfile-auth
+    env_file:
+      - .env
+    environment:
+      GRPC_SERVER_PORT: "50051"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  model_service:
+    container_name: model_service
+    build:
+      context: .
+      dockerfile: Dockerfile-model
+    env_file:
+      - .env
+    environment:
+      GRPC_SERVER_PORT: "50052"
+    networks:
+      - app_network
+    volumes:
+      - model_repository:/models
+    depends_on:
+      postgres:
+        condition: service_healthy
+      triton:
+        condition: service_started
+
+  message_service:
+    container_name: message_service
+    build:
+      context: .
+      dockerfile: Dockerfile-message
+    env_file:
+      - .env
+    environment:
+      GRPC_SERVER_PORT: "50053"
+    networks:
+      - app_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      triton:
+        condition: service_started
+
+  gateway_service:
+    container_name: gateway_service
+    build:
+      context: .
+      dockerfile: Dockerfile-gateway
+    environment:
+      - VIRTUAL_HOST=localhost
+      - VIRTUAL_PORT=8080
+    env_file:
+      - .env
+    networks:
+      - app_network
+    depends_on:
+      model_service:
+        condition: service_started
+      auth_service:
+        condition: service_started
+      message_service:
+        condition: service_started
+
+  nginx_proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    depends_on:
+      gateway_service:
+        condition: service_started
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+  model_repository:
+
+networks:
+  app_network:

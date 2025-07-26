@@ -1,0 +1,32 @@
+# Этап сборки
+FROM golang:1.23 AS builder
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Копируем файлы для управления зависимостями
+COPY go.mod go.sum ./
+
+# Устанавливаем зависимости
+RUN go mod download
+
+# Копируем исходный код
+COPY . .
+
+# Собираем бинарник
+RUN CGO_ENABLED=0 go build -o message_service ./cmd/message/main.go
+
+# Минимальный образ для выполнения
+FROM alpine:latest
+
+# Устанавливаем рабочую директорию
+WORKDIR /app
+
+# Устанавливаем сертификаты
+RUN apk --no-cache add ca-certificates
+
+# Копируем бинарник из стадии сборки
+COPY --from=builder /app/message_service .
+
+# Запускаем сервис
+CMD ["./message_service"]

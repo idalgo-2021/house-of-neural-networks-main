@@ -1,0 +1,411 @@
+basePath: /
+definitions:
+  models.GetMessagesResponse:
+    properties:
+      messages:
+        items:
+          $ref: '#/definitions/models.Message'
+        type: array
+    type: object
+  models.GetModelResponse:
+    properties:
+      model:
+        $ref: '#/definitions/models.Model'
+    type: object
+  models.ListModelsResponse:
+    properties:
+      models:
+        items:
+          $ref: '#/definitions/models.Model'
+        type: array
+    type: object
+  models.LogInRequest:
+    properties:
+      password:
+        example: securepassword123
+        type: string
+      username:
+        example: john_doe
+        type: string
+    type: object
+  models.LogInResponse:
+    properties:
+      jwt:
+        type: string
+      userId:
+        type: integer
+    type: object
+  models.Message:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      input1:
+        items:
+          type: integer
+        type: array
+      input2:
+        items:
+          type: integer
+        type: array
+      modelID:
+        type: integer
+      results:
+        items:
+          type: string
+        type: array
+      userID:
+        type: integer
+      versionID:
+        type: integer
+    type: object
+  models.Model:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      user_id:
+        type: integer
+      versions:
+        items:
+          $ref: '#/definitions/models.Version'
+        type: array
+    type: object
+  models.SendMessageRequest:
+    properties:
+      input1:
+        example:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        items:
+          type: integer
+        type: array
+      input2:
+        example:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        items:
+          type: integer
+        type: array
+    type: object
+  models.SendMessageResponse:
+    properties:
+      results:
+        example:
+        - 1 + 1 = 2
+        - 1 - 1 = 0
+        items:
+          type: string
+        type: array
+    type: object
+  models.SignUpRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: securepassword123
+        type: string
+      username:
+        example: john_doe
+        type: string
+    type: object
+  models.SignUpResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  models.UnloadModelRequest:
+    properties:
+      id:
+        type: integer
+    type: object
+  models.UnloadModelResponse:
+    properties:
+      success:
+        type: boolean
+    type: object
+  models.UploadModelResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  models.UploadVersionResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  models.Version:
+    properties:
+      id:
+        type: integer
+      model_id:
+        type: integer
+      number:
+        type: integer
+    type: object
+host: localhost:80
+info:
+  contact: {}
+  description: This is the API documentation for the services.
+  title: House of neural networks API
+  version: "1.0"
+paths:
+  /chat/{model_id}:
+    get:
+      description: This endpoint retrieves all messages associated with a specific
+        model ID and user ID.
+      parameters:
+      - description: Model ID
+        in: path
+        name: model_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of messages
+          schema:
+            $ref: '#/definitions/models.GetMessagesResponse'
+      security:
+      - TokenAuth: []
+      summary: Get messages
+      tags:
+      - Message service
+  /chat/{model_id}/{version_id}:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows a user to send a request to a specific model
+        identified by its ID and receive a response.
+      parameters:
+      - description: Model ID
+        in: path
+        name: model_id
+        required: true
+        type: integer
+      - description: Version ID of model
+        in: path
+        name: version_id
+        required: true
+        type: integer
+      - description: Request to model
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.SendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response from the model
+          schema:
+            $ref: '#/definitions/models.SendMessageResponse'
+      security:
+      - TokenAuth: []
+      summary: Send a message to a model
+      tags:
+      - Message service
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Авторизует пользователей
+      parameters:
+      - description: LogIn data
+        in: body
+        name: register
+        required: true
+        schema:
+          $ref: '#/definitions/models.LogInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.LogInResponse'
+      summary: Авторизация пользователя
+      tags:
+      - Auth service
+  /models:
+    delete:
+      consumes:
+      - application/json
+      description: This endpoint allows the user to unload a model from the service
+        by providing the model ID in the request body.
+      parameters:
+      - description: Unload model request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UnloadModelRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Model unload successful
+          schema:
+            $ref: '#/definitions/models.UnloadModelResponse'
+      security:
+      - TokenAuth: []
+      summary: Unload a model
+      tags:
+      - Model service
+    get:
+      consumes:
+      - application/json
+      description: Возвращает список моделей, связанных с пользователем
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ListModelsResponse'
+      security:
+      - TokenAuth: []
+      summary: Получение списка моделей
+      tags:
+      - Model service
+    post:
+      consumes:
+      - multipart/form-data
+      description: This endpoint allows the user to upload a model file with a name
+        and a file. It expects a multipart form with fields "name" and "file".
+      parameters:
+      - description: Name of the model
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Config file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Model upload successful
+          schema:
+            $ref: '#/definitions/models.UploadModelResponse'
+      security:
+      - TokenAuth: []
+      summary: Upload a model to the service
+      tags:
+      - Model service
+  /models/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает данные о модели по ее идентификатору
+      parameters:
+      - description: Идентификатор модели
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.GetModelResponse'
+      security:
+      - TokenAuth: []
+      summary: Получение модели
+      tags:
+      - Model service
+  /models/version:
+    post:
+      consumes:
+      - multipart/form-data
+      description: This endpoint allows the user to upload a new version of an existing
+        model. The request includes version number, model ID, and one or more files.
+      parameters:
+      - description: Version number of the model
+        in: formData
+        name: version
+        required: true
+        type: integer
+      - description: ID of the model
+        in: formData
+        name: model_id
+        required: true
+        type: integer
+      - description: Files for the new version model
+        in: formData
+        name: files
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Version upload successful
+          schema:
+            $ref: '#/definitions/models.UploadVersionResponse'
+      security:
+      - TokenAuth: []
+      summary: Upload a new version of a model
+      tags:
+      - Model service
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует новых пользователей
+      parameters:
+      - description: SignUp data
+        in: body
+        name: register
+        required: true
+        schema:
+          $ref: '#/definitions/models.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SignUpResponse'
+      summary: Регистрация пользователя
+      tags:
+      - Auth service
+swagger: "2.0"

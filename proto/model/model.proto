@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+option go_package = "pkg/api/client";
+
+package api;
+
+service ModelService {
+  rpc GetModel(GetModelRequest) returns (GetModelResponse);
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+  rpc UploadModel(UploadModelRequest) returns (UploadModelResponse);
+  rpc UploadVersion(UploadVersionRequest) returns (UploadVersionResponse);
+  rpc UnloadModel(UnloadModelRequest) returns (UnloadModelResponse);
+}
+
+message File {
+  string filename = 1;
+  bytes content = 2;
+}
+
+message Model {
+  int64 id = 1;
+  string name = 2;
+  repeated Version versions = 3;
+  int64 user_id = 4;
+}
+
+message Version {
+  int64 id = 1;
+  int32 number = 2;
+  int64 model_id = 3;
+}
+
+message GetModelRequest {
+  int64 id = 1;
+  string request_id = 2;
+}
+
+message GetModelResponse {
+  Model model = 1;
+}
+
+message ListModelsRequest {
+  int64 user_id = 1;
+  string request_id = 2;
+}
+
+message ListModelsResponse {
+  repeated Model models = 1;
+}
+
+message UploadModelRequest {
+  string name = 1;
+  File config = 2;
+  int64 user_id = 3;
+  string request_id = 4;
+}
+
+message UploadModelResponse {
+  int64 id = 1;
+}
+
+message UploadVersionRequest {
+  int64 model_id = 1;
+  int32 number = 2;
+  repeated File files = 3;
+  string request_id = 4;
+}
+
+message UploadVersionResponse {
+  int64 id = 1;
+}
+
+message UnloadModelRequest {
+  int64 id = 1;
+  string request_id = 2;
+}
+
+message UnloadModelResponse {
+  bool success = 1;
+}

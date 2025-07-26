@@ -1,0 +1,36 @@
+PROTO_DIR := proto
+OUTPUT_DIR := pkg/api
+
+.PHONY: all generate clean
+
+all-generate: auth-proto model-proto message-proto
+
+auth-proto:
+	protoc -I$(PROTO_DIR) \
+    		--go_out=$(OUTPUT_DIR) --go_opt=paths=source_relative \
+    		--go-grpc_out=$(OUTPUT_DIR) --go-grpc_opt=paths=source_relative \
+    		$(PROTO_DIR)/auth/auth.proto
+
+model-proto:
+	protoc -I$(PROTO_DIR) \
+    		--go_out=$(OUTPUT_DIR) --go_opt=paths=source_relative \
+    		--go-grpc_out=$(OUTPUT_DIR) --go-grpc_opt=paths=source_relative \
+    		$(PROTO_DIR)/model/model.proto
+
+message-proto:
+	protoc -I$(PROTO_DIR) \
+    		--go_out=$(OUTPUT_DIR) --go_opt=paths=source_relative \
+    		--go-grpc_out=$(OUTPUT_DIR) --go-grpc_opt=paths=source_relative \
+    		$(PROTO_DIR)/message/message.proto
+
+triton-proto:
+	protoc -I proto/triton \
+    		--go_out=$(OUTPUT_DIR)/triton --go_opt=paths=source_relative \
+    		--go-grpc_out=$(OUTPUT_DIR)/triton --go-grpc_opt=paths=source_relative \
+    		$(PROTO_DIR)/triton/*.proto
+
+clean:
+	rm -rf $(OUTPUT_DIR)
+
+make-swag:
+	swag init --generalInfo cmd/gateway/main.go --output ./docs

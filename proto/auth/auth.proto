@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option go_package = "pkg/api/client";
+
+package api;
+
+service AuthService {
+  rpc SignUp(SignUpRequest) returns (SignUpResponse);
+  rpc LogIn(LogInRequest) returns (LogInResponse);
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+}
+
+message SignUpRequest {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+  string request_id = 4;
+}
+
+message SignUpResponse {
+  bool success = 1;
+}
+
+message LogInRequest {
+  string username = 1;
+  string password = 2;
+  string request_id = 3;
+}
+
+message LogInResponse {
+  string jwt = 1;
+  int64 userId = 2;
+}
+
+message ValidateTokenRequest {
+  string jwt = 1;
+}
+
+message ValidateTokenResponse {
+    bool valid = 1;
+}
